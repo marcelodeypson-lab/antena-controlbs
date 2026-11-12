@@ -1,0 +1,46 @@
+
+name: Gerar APK ANTENA CONTROL
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "principal" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar arquivos
+        uses: actions/checkout@v4
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Preparar Android
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar ferramentas
+        run: |
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Extrair projeto
+        run: |
+          mkdir projeto
+          unzip -q ANTENA_CONTROL_CLOUD_BUILD.zip -d projeto
+
+      - name: Compilar aplicativo
+        run: |
+          cd projeto
+          gradle --no-daemon assembleDebug
+
+      - name: Disponibilizar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANTENA-CONTROL-APK
+          path: projeto/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+          
