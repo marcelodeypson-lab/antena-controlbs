@@ -2,17 +2,16 @@ package br.com.subwayauto;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    private static final String GAME_PACKAGE = "com.kiloo.subwaysurf";
     private TextView status;
 
     private int dp(float value) {
@@ -37,7 +36,7 @@ public class MainActivity extends Activity {
         root.addView(title);
 
         TextView subtitle = new TextView(this);
-        subtitle.setText("Assistente experimental para Subway Surfers.");
+        subtitle.setText("Controle flutuante para usar sobre jogos e navegadores.");
         subtitle.setTextSize(16);
         subtitle.setTextColor(0xFFCFD8DC);
         subtitle.setGravity(Gravity.CENTER);
@@ -47,7 +46,7 @@ public class MainActivity extends Activity {
         status.setTextSize(15);
         status.setTextColor(0xFFFFCC80);
         status.setGravity(Gravity.CENTER);
-        status.setPadding(0, dp(28), 0, dp(24));
+        status.setPadding(0, dp(24), 0, dp(20));
         root.addView(status);
 
         Button access = new Button(this);
@@ -57,18 +56,21 @@ public class MainActivity extends Activity {
         );
         root.addView(access, new LinearLayout.LayoutParams(-1, -2));
 
-        Button refresh = new Button(this);
-        refresh.setText("VERIFICAR CONEXÃO");
-        refresh.setOnClickListener(v -> refreshStatus());
-        root.addView(refresh, new LinearLayout.LayoutParams(-1, -2));
+        Button overlay = new Button(this);
+        overlay.setText("ATIVAR MODO FLUTUANTE");
+        overlay.setOnClickListener(v -> enableFloatingMode());
+        root.addView(overlay, new LinearLayout.LayoutParams(-1, -2));
 
-        Button launchGame = new Button(this);
-        launchGame.setText("ABRIR SUBWAY SURFERS");
-        launchGame.setOnClickListener(v -> openGame());
-        root.addView(launchGame, new LinearLayout.LayoutParams(-1, -2));
+        Button stop = new Button(this);
+        stop.setText("PARAR SERVIÇO FLUTUANTE");
+        stop.setOnClickListener(v -> {
+            stopService(new Intent(this, FloatingControlService.class));
+            refreshStatus();
+        });
+        root.addView(stop, new LinearLayout.LayoutParams(-1, -2));
 
         TextView note = new TextView(this);
-        note.setText("ATENÇÃO: esta versão ainda não joga sozinha. Ela verifica a conexão do serviço e permite abrir o jogo. O reconhecimento de obstáculos, a captura autorizada da tela e os comandos automáticos serão implementados nas próximas etapas.");
+        note.setText("O modo flutuante mantém um botão sobre outros aplicativos e uma notificação enquanto estiver ativo. Esta etapa ainda não reconhece obstáculos nem joga automaticamente. A captura de tela autorizada e a inteligência do jogo serão adicionadas depois.");
         note.setTextColor(0xFFB0BEC5);
         note.setTextSize(13);
         note.setPadding(0, dp(24), 0, 0);
@@ -83,33 +85,30 @@ public class MainActivity extends Activity {
         refreshStatus();
     }
 
-    private void refreshStatus() {
-        boolean enabled = AutoPlayAccessibilityService.isEnabled(this);
-        boolean connected = AutoPlayAccessibilityService.isConnected();
-
-        if (connected) {
-            status.setText("SERVIÇO CONECTADO ✓\nAcessibilidade ativa. Você já pode abrir o jogo para o teste inicial.");
-            status.setTextColor(0xFF80CBC4);
-        } else if (enabled) {
-            status.setText("PERMISSÃO ATIVADA, MAS SERVIÇO NÃO CONECTADO. Volte às configurações, desligue e ligue SUBWAY AUTO; depois retorne aqui.");
-            status.setTextColor(0xFFFFCC80);
-        } else {
-            status.setText("ACESSIBILIDADE DESATIVADA. Toque em CONFIGURAR ACESSIBILIDADE e habilite SUBWAY AUTO.");
-            status.setTextColor(0xFFFFCC80);
-        }
-    }
-
-    private void openGame() {
-        PackageManager pm = getPackageManager();
-        Intent launch = pm.getLaunchIntentForPackage(GAME_PACKAGE);
-        if (launch == null) {
-            Toast.makeText(this, "Subway Surfers não foi encontrado. Verifique se está instalado.", Toast.LENGTH_LONG).show();
+    private void enableFloatingMode() {
+        if (!Settings.canDrawOverlays(this)) {
+            Intent permission = new Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:" + getPackageName())
+            );
+            startActivity(permission);
             return;
         }
-        if (!AutoPlayAccessibilityService.isConnected()) {
-            Toast.makeText(this, "O serviço de acessibilidade ainda não está conectado. Confira o status antes de continuar.", Toast.LENGTH_LONG).show();
+        Intent service = new Intent(this, FloatingControlService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(service);
+        } else {
+            startService(service);
         }
-        launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(launch);
+        refreshStatus();
+    }
+
+    private void refreshStatus() {
+        boolean overlay = Settings.canDrawOverlays(this);
+        boolean accessibility = AutoPlayAccessibilityService.isEnabled(this);
+        String message = overlay ? "PERMISSÃO DE JANELA FLUTUANTE: ATIVA" : "PERMISSÃO DE JANELA FLUTUANTE: DESATIVADA";
+        message += accessibility ? "\nACESSIBILIDADE: ATIVADA" : "\nACESSIBILIDADE: DESATIVADA";
+        status.setText(message);
+        status.setTextColor(overlay && accessibility ? 0xFF80CBC4 : 0xFFFFCC80);
     }
 }
