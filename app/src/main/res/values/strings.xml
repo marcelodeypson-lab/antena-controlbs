@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">SUBWAY AUTO</string>
-    <string name="accessibility_service_description">Permite executar gestos no jogo quando o usuário ativar o controle automático.</string>
+    <string name="accessibility_service_description">Permite executar gestos no aplicativo quando o usuário ativar o controle automático.</string>
 </resources>
