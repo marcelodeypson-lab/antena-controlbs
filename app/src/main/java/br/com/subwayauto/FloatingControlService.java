@@ -27,6 +27,7 @@ public class FloatingControlService extends Service {
     private static final int NOTIFICATION_ID = 4101;
     private static final String PREFS = "subway_auto_controls";
     private static final String KEY_ENABLED = "app_enabled";
+    private static final String KEY_PAUSED = "app_paused";
 
     private WindowManager windowManager;
     private TextView bubble;
@@ -35,6 +36,8 @@ public class FloatingControlService extends Service {
     private WindowManager.LayoutParams menuParams;
     private boolean menuVisible = false;
     private boolean appEnabled = false;
+    private boolean appPaused = false;
+    private Button pauseButton;
 
     @Override
     public void onCreate() {
@@ -42,6 +45,7 @@ public class FloatingControlService extends Service {
         createNotificationChannel();
         SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         appEnabled = prefs.getBoolean(KEY_ENABLED, false);
+        appPaused = prefs.getBoolean(KEY_PAUSED, false);
 
         Intent open = new Intent(this, MainActivity.class);
         PendingIntent pending = PendingIntent.getActivity(
@@ -195,6 +199,10 @@ public class FloatingControlService extends Service {
         });
         menu.addView(home, new LinearLayout.LayoutParams(dp(170), -2));
 
+        pauseButton = new Button(this);
+        pauseButton.setOnClickListener(v -> togglePaused());
+        menu.addView(pauseButton, new LinearLayout.LayoutParams(dp(170), -2));
+
         TextView state = new TextView(this);
         state.setTag("state");
         state.setTextColor(0xFFCFD8DC);
@@ -233,6 +241,12 @@ public class FloatingControlService extends Service {
         menuVisible = false;
     }
 
+    private void togglePaused() {
+        appPaused = !appPaused;
+        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(KEY_PAUSED, appPaused).apply();
+        updateMenuState();
+    }
+
     private void setAppEnabled(boolean enabled) {
         appEnabled = enabled;
         getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(KEY_ENABLED, enabled).apply();
@@ -245,12 +259,17 @@ public class FloatingControlService extends Service {
         if (menu == null) return;
         View v = menu.findViewWithTag("state");
         if (v instanceof TextView) {
-            ((TextView)v).setText(appEnabled ? "ESTADO: LIGADO" : "ESTADO: DESLIGADO");
+            ((TextView)v).setText(!appEnabled ? "ESTADO: DESLIGADO" : (appPaused ? "ESTADO: PAUSADO" : "ESTADO: LIGADO"));
+        if (pauseButton != null) pauseButton.setText(appPaused ? "RETOMAR" : "PAUSAR");
         }
     }
 
     public static boolean isAppEnabled(Context context) {
         return context.getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_ENABLED, false);
+    }
+
+    public static boolean isAppPaused(Context context) {
+        return context.getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_PAUSED, false);
     }
 
     @Override
