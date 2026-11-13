@@ -13,6 +13,8 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -32,6 +34,14 @@ public class FloatingControlService extends Service {
 
     private WindowManager windowManager;
     private TextView bubble;
+    private TextView visionBadge;
+    private Handler uiHandler;
+    private final Runnable visionTicker = new Runnable() {
+        @Override public void run() {
+            updateVisionBadge();
+            if (uiHandler != null) uiHandler.postDelayed(this, 600);
+        }
+    };
     private LinearLayout menu;
     private WindowManager.LayoutParams bubbleParams;
     private WindowManager.LayoutParams menuParams;
@@ -66,7 +76,9 @@ public class FloatingControlService extends Service {
         } else {
             startForeground(NOTIFICATION_ID, notification);
         }
+        uiHandler = new Handler(Looper.getMainLooper());
         showBubble();
+        uiHandler.post(visionTicker);
     }
 
     private void createNotificationChannel() {
@@ -123,6 +135,7 @@ public class FloatingControlService extends Service {
         bubbleShape.setColor(0xEE1565C0);
         bubble.setBackground(bubbleShape);
         bubble.setElevation(dp(5));
+        applyOverlayOpacity();
         bubbleParams = makeParams(Gravity.TOP | Gravity.LEFT, dp(8), dp(90));
         bubbleParams.width = dp(42);
         bubbleParams.height = dp(42);
@@ -160,8 +173,24 @@ public class FloatingControlService extends Service {
             }
         });
 
+        visionBadge = new TextView(this);
+        visionBadge.setText("L-- C-- R--");
+        visionBadge.setTextColor(Color.WHITE);
+        visionBadge.setTextSize(9);
+        visionBadge.setTypeface(null, android.graphics.Typeface.BOLD);
+        visionBadge.setGravity(Gravity.CENTER);
+        visionBadge.setPadding(dp(5), dp(3), dp(5), dp(3));
+        GradientDrawable badgeShape = new GradientDrawable();
+        badgeShape.setColor(0xDD263238);
+        badgeShape.setCornerRadius(dp(8));
+        visionBadge.setBackground(badgeShape);
+        visionBadge.setElevation(dp(4));
+        WindowManager.LayoutParams badgeParams = makeParams(Gravity.TOP | Gravity.LEFT, dp(54), dp(96));
+        badgeParams.width = dp(92);
+        badgeParams.height = dp(30);
         try {
             windowManager.addView(bubble, bubbleParams);
+            windowManager.addView(visionBadge, badgeParams);
         } catch (Exception error) {
             stopSelf();
             return;
@@ -218,6 +247,25 @@ public class FloatingControlService extends Service {
         updateMenuState();
 
         menuParams = makeParams(Gravity.TOP | Gravity.LEFT, dp(8), dp(140));
+    }
+
+    private void updateVisionBadge() {
+        if (visionBadge == null) return;
+        String summary = AutoPlayAccessibilityService.getVisionStatus();
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("L(\\\\d+) C(\\\\d+) R(\\\\d+)").matcher(summary == null ? "" : summary);
+        if (matcher.find()) {
+            visionBadge.setText("L" + matcher.group(1) + " C" + matcher.group(2) + " R" + matcher.group(3));
+        } else {
+            visionBadge.setText("VISÃO aguardando");
+        }
+        applyOverlayOpacity();
+    }
+
+    private void applyOverlayOpacity() {
+        int percent = getSharedPreferences(PREFS, MODE_PRIVATE).getInt("overlay_opacity", 92);
+        float alpha = Math.max(0.35f, Math.min(1.0f, percent / 100f));
+        if (bubble != null) bubble.setAlpha(alpha);
+        if (visionBadge != null) visionBadge.setAlpha(alpha);
     }
 
     private void positionMenu() {
@@ -279,12 +327,17 @@ public class FloatingControlService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null && "UPDATE_OVERLAY_STYLE".equals(intent.getAction())) applyOverlayOpacity();
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
+        if (uiHandler != null) uiHandler.removeCallbacksAndMessages(null);
         hideMenu();
+        if (windowManager != null && visionBadge != null) {
+            try { windowManager.removeView(visionBadge); } catch (Exception ignored) { }
+        }
         if (windowManager != null && bubble != null) {
             try { windowManager.removeView(bubble); } catch (Exception ignored) { }
         }
