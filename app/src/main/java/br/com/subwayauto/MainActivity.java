@@ -79,7 +79,7 @@ public class MainActivity extends Activity {
         root.addView(stop, new LinearLayout.LayoutParams(-1, -2));
 
         TextView note = new TextView(this);
-        note.setText("O modo flutuante mantém um botão sobre outros aplicativos e uma notificação enquanto estiver ativo. A captura de tela do Subway Surfers é analisada para comparar visualmente as três pistas. Os movimentos automáticos ainda estão desativados enquanto validamos o reconhecimento.");
+        note.setText("O modo flutuante mantém um botão sobre outros aplicativos e uma notificação enquanto estiver ativo. Com LIGAR, o app pode capturar e analisar visualmente a tela do Subway Surfers ou de navegadores compatíveis (como Chrome), apenas para diagnóstico. No navegador, a captura não confirma o endereço da página. Não realiza apostas, depósitos, saques nem jogadas automáticas.");
         note.setTextColor(0xFFB0BEC5);
         note.setTextSize(13);
         note.setPadding(0, dp(24), 0, 0);
