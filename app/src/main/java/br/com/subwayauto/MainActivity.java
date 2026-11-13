@@ -70,7 +70,7 @@ public class MainActivity extends Activity {
         root.addView(stop, new LinearLayout.LayoutParams(-1, -2));
 
         TextView note = new TextView(this);
-        note.setText("O modo flutuante mantém um botão sobre outros aplicativos e uma notificação enquanto estiver ativo. Esta etapa ainda não reconhece obstáculos nem joga automaticamente. A captura de tela autorizada e a inteligência do jogo serão adicionadas depois.");
+        note.setText("O modo flutuante mantém um botão sobre outros aplicativos e uma notificação enquanto estiver ativo. Nesta etapa, a captura de tela do Subway Surfers está sendo preparada para análise visual. Os movimentos automáticos só serão ativados depois que o reconhecimento de obstáculos for validado.");
         note.setTextColor(0xFFB0BEC5);
         note.setTextSize(13);
         note.setPadding(0, dp(24), 0, 0);
