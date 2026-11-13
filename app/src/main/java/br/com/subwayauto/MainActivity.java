@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
+import android.os.Bundle;\nimport android.os.Handler;\nimport android.os.Looper;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.widget.Button;
@@ -12,7 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
-    private TextView status;
+    private TextView status;\n    private final Handler statusHandler = new Handler(Looper.getMainLooper());\n    private final Runnable statusTicker = new Runnable() {\n        @Override public void run() { refreshStatus(); statusHandler.postDelayed(this, 1000); }\n    };
 
     private int dp(float value) {
         return (int)(value * getResources().getDisplayMetrics().density + 0.5f);
@@ -85,7 +85,7 @@ public class MainActivity extends Activity {
         refreshStatus();
     }
 
-    private void enableFloatingMode() {
+    @Override\n    protected void onPause() {\n        statusHandler.removeCallbacks(statusTicker);\n        super.onPause();\n    }\n\n    private void enableFloatingMode() {
         if (!Settings.canDrawOverlays(this)) {
             Intent permission = new Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -108,7 +108,7 @@ public class MainActivity extends Activity {
         boolean accessibility = AutoPlayAccessibilityService.isEnabled(this);
         String message = overlay ? "PERMISSÃO DE JANELA FLUTUANTE: ATIVA" : "PERMISSÃO DE JANELA FLUTUANTE: DESATIVADA";
         message += accessibility ? "\nACESSIBILIDADE: ATIVADA" : "\nACESSIBILIDADE: DESATIVADA";
-        status.setText(message);
+        message += "\\n" + AutoPlayAccessibilityService.getFrameStatus();\n        message += "\\n" + AutoPlayAccessibilityService.getVisionStatus();\n        message += "\\nQuadros analisados: " + AutoPlayAccessibilityService.getFramesCaptured();\n        status.setText(message);
         status.setTextColor(overlay && accessibility ? 0xFF80CBC4 : 0xFFFFCC80);
     }
 }
