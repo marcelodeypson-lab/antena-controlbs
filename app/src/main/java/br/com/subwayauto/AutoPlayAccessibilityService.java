@@ -17,7 +17,7 @@ import android.view.accessibility.AccessibilityEvent;
 public class AutoPlayAccessibilityService extends AccessibilityService {
     private static volatile boolean connected = false;
     private static volatile String foregroundPackage = "";
-    private static volatile String frameStatus = "Aguardando Subway Surfers";
+    private static volatile String frameStatus = "Aguardando jogo ou navegador";
     private static volatile long framesCaptured = 0;
     private static volatile String visionStatus = "Análise visual aguardando imagem";
     private Handler handler;
@@ -35,10 +35,13 @@ public class AutoPlayAccessibilityService extends AccessibilityService {
                 frameStatus = "Toque em LIGAR no controle flutuante";
             } else if (paused) {
                 frameStatus = "Captura pausada";
-            } else if (!"com.kiloo.subwaysurf".equals(foregroundPackage)) {
-                frameStatus = "Aguardando jogo | pacote: " +
+            } else if (!isSupportedCaptureTarget(foregroundPackage)) {
+                frameStatus = "Abra Subway Surfers ou um navegador | pacote: " +
                     (foregroundPackage.isEmpty() ? "nenhum evento recebido" : foregroundPackage);
             } else if (!captureInFlight) {
+                if (isBrowserPackage(foregroundPackage)) {
+                    frameStatus = "Modo navegador (somente leitura): " + foregroundPackage;
+                }
                 captureFrame();
             }
             if (handler != null) handler.postDelayed(this, 350);
@@ -76,6 +79,21 @@ public class AutoPlayAccessibilityService extends AccessibilityService {
     public static long getFramesCaptured() { return framesCaptured; }
     public static String getVisionStatus() { return visionStatus; }
     public static String getForegroundPackage() { return foregroundPackage; }
+
+    private static boolean isSupportedCaptureTarget(String packageName) {
+        return "com.kiloo.subwaysurf".equals(packageName) || isBrowserPackage(packageName);
+    }
+
+    private static boolean isBrowserPackage(String packageName) {
+        if (packageName == null) return false;
+        return "com.android.chrome".equals(packageName)
+            || "org.mozilla.firefox".equals(packageName)
+            || "com.brave.browser".equals(packageName)
+            || "com.microsoft.emmx".equals(packageName)
+            || "com.sec.android.app.sbrowser".equals(packageName)
+            || "com.opera.browser".equals(packageName)
+            || "com.opera.mini.native".equals(packageName);
+    }
 
     private void captureFrame() {
         captureInFlight = true;
