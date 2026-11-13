@@ -45,6 +45,7 @@ public class FloatingControlService extends Service {
     private LinearLayout menu;
     private WindowManager.LayoutParams bubbleParams;
     private WindowManager.LayoutParams menuParams;
+    private WindowManager.LayoutParams badgeParams;
     private boolean menuVisible = false;
     private boolean appEnabled = false;
     private boolean appPaused = false;
@@ -164,6 +165,11 @@ public class FloatingControlService extends Service {
                         bubbleParams.x = Math.max(0, startX + dx);
                         bubbleParams.y = Math.max(0, startY + dy);
                         try { windowManager.updateViewLayout(bubble, bubbleParams); } catch (Exception ignored) { }
+                        if (badgeParams != null && visionBadge != null) {
+                            badgeParams.x = bubbleParams.x + dp(46);
+                            badgeParams.y = bubbleParams.y + dp(6);
+                            try { windowManager.updateViewLayout(visionBadge, badgeParams); } catch (Exception ignored) { }
+                        }
                         if (menuVisible) positionMenu();
                         return true;
                     }
@@ -185,7 +191,7 @@ public class FloatingControlService extends Service {
         badgeShape.setCornerRadius(dp(8));
         visionBadge.setBackground(badgeShape);
         visionBadge.setElevation(dp(4));
-        WindowManager.LayoutParams badgeParams = makeParams(Gravity.TOP | Gravity.LEFT, dp(54), dp(96));
+        badgeParams = makeParams(Gravity.TOP | Gravity.LEFT, dp(54), dp(96));
         badgeParams.width = dp(92);
         badgeParams.height = dp(30);
         try {
@@ -252,7 +258,7 @@ public class FloatingControlService extends Service {
     private void updateVisionBadge() {
         if (visionBadge == null) return;
         String summary = AutoPlayAccessibilityService.getVisionStatus();
-        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("L(\\\\d+) C(\\\\d+) R(\\\\d+)").matcher(summary == null ? "" : summary);
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("L(\\d+) C(\\d+) R(\\d+)").matcher(summary == null ? "" : summary);
         if (matcher.find()) {
             visionBadge.setText("L" + matcher.group(1) + " C" + matcher.group(2) + " R" + matcher.group(3));
         } else {
