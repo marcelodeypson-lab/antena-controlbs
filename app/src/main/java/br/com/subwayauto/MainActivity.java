@@ -11,6 +11,7 @@ import android.provider.Settings;
 import android.view.Gravity;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
@@ -57,6 +58,34 @@ public class MainActivity extends Activity {
         status.setGravity(Gravity.CENTER);
         status.setPadding(0, dp(24), 0, dp(20));
         root.addView(status);
+
+        TextView opacityLabel = new TextView(this);
+        opacityLabel.setTextColor(0xFFCFD8DC);
+        opacityLabel.setTextSize(14);
+        opacityLabel.setPadding(0, dp(12), 0, dp(4));
+        root.addView(opacityLabel);
+
+        SeekBar opacity = new SeekBar(this);
+        opacity.setMax(65);
+        android.content.SharedPreferences prefs = getSharedPreferences("subway_auto_controls", MODE_PRIVATE);
+        int savedOpacity = prefs.getInt("overlay_opacity", 92);
+        opacity.setProgress(Math.max(0, Math.min(65, savedOpacity - 35)));
+        opacityLabel.setText("TRANSPARÊNCIA DOS ÍCONES: " + savedOpacity + "% de opacidade");
+        opacity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int value = progress + 35;
+                opacityLabel.setText("TRANSPARÊNCIA DOS ÍCONES: " + value + "% de opacidade");
+                if (fromUser) {
+                    prefs.edit().putInt("overlay_opacity", value).apply();
+                    Intent update = new Intent(MainActivity.this, FloatingControlService.class);
+                    update.setAction("UPDATE_OVERLAY_STYLE");
+                    startService(update);
+                }
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+        root.addView(opacity, new LinearLayout.LayoutParams(-1, -2));
 
         Button access = new Button(this);
         access.setText("CONFIGURAR ACESSIBILIDADE");
