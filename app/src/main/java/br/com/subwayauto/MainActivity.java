@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;\nimport android.os.Handler;\nimport android.os.Looper;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.widget.Button;
@@ -12,7 +14,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
-    private TextView status;\n    private final Handler statusHandler = new Handler(Looper.getMainLooper());\n    private final Runnable statusTicker = new Runnable() {\n        @Override public void run() { refreshStatus(); statusHandler.postDelayed(this, 1000); }\n    };
+    private TextView status;
+    private final Handler statusHandler = new Handler(Looper.getMainLooper());
+    private final Runnable statusTicker = new Runnable() {
+        @Override public void run() {
+            refreshStatus();
+            statusHandler.postDelayed(this, 1000);
+        }
+    };
 
     private int dp(float value) {
         return (int)(value * getResources().getDisplayMetrics().density + 0.5f);
@@ -70,7 +79,7 @@ public class MainActivity extends Activity {
         root.addView(stop, new LinearLayout.LayoutParams(-1, -2));
 
         TextView note = new TextView(this);
-        note.setText("O modo flutuante mantém um botão sobre outros aplicativos e uma notificação enquanto estiver ativo. Nesta etapa, a captura de tela do Subway Surfers está sendo preparada para análise visual. Os movimentos automáticos só serão ativados depois que o reconhecimento de obstáculos for validado.");
+        note.setText("O modo flutuante mantém um botão sobre outros aplicativos e uma notificação enquanto estiver ativo. A captura de tela do Subway Surfers é analisada para comparar visualmente as três pistas. Os movimentos automáticos ainda estão desativados enquanto validamos o reconhecimento.");
         note.setTextColor(0xFFB0BEC5);
         note.setTextSize(13);
         note.setPadding(0, dp(24), 0, 0);
@@ -82,10 +91,17 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        refreshStatus();
+        statusHandler.removeCallbacks(statusTicker);
+        statusHandler.post(statusTicker);
     }
 
-    @Override\n    protected void onPause() {\n        statusHandler.removeCallbacks(statusTicker);\n        super.onPause();\n    }\n\n    private void enableFloatingMode() {
+    @Override
+    protected void onPause() {
+        statusHandler.removeCallbacks(statusTicker);
+        super.onPause();
+    }
+
+    private void enableFloatingMode() {
         if (!Settings.canDrawOverlays(this)) {
             Intent permission = new Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -108,7 +124,10 @@ public class MainActivity extends Activity {
         boolean accessibility = AutoPlayAccessibilityService.isEnabled(this);
         String message = overlay ? "PERMISSÃO DE JANELA FLUTUANTE: ATIVA" : "PERMISSÃO DE JANELA FLUTUANTE: DESATIVADA";
         message += accessibility ? "\nACESSIBILIDADE: ATIVADA" : "\nACESSIBILIDADE: DESATIVADA";
-        message += "\\n" + AutoPlayAccessibilityService.getFrameStatus();\n        message += "\\n" + AutoPlayAccessibilityService.getVisionStatus();\n        message += "\\nQuadros analisados: " + AutoPlayAccessibilityService.getFramesCaptured();\n        status.setText(message);
+        message += "\n" + AutoPlayAccessibilityService.getFrameStatus();
+        message += "\n" + AutoPlayAccessibilityService.getVisionStatus();
+        message += "\nQuadros analisados: " + AutoPlayAccessibilityService.getFramesCaptured();
+        status.setText(message);
         status.setTextColor(overlay && accessibility ? 0xFF80CBC4 : 0xFFFFCC80);
     }
 }
