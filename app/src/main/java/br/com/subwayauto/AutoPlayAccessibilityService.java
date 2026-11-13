@@ -18,7 +18,8 @@ public class AutoPlayAccessibilityService extends AccessibilityService {
     private static volatile boolean connected = false;
     private static volatile String foregroundPackage = "";
     private static volatile String frameStatus = "Aguardando Subway Surfers";
-    private static volatile long framesCaptured = 0;\n    private static volatile String visionStatus = "Análise visual aguardando imagem";
+    private static volatile long framesCaptured = 0;
+    private static volatile String visionStatus = "Análise visual aguardando imagem";
     private Handler handler;
     private boolean captureInFlight = false;
 
@@ -64,7 +65,8 @@ public class AutoPlayAccessibilityService extends AccessibilityService {
 
     public static boolean isConnected() { return connected; }
     public static String getFrameStatus() { return frameStatus; }
-    public static long getFramesCaptured() { return framesCaptured; }\n    public static String getVisionStatus() { return visionStatus; }
+    public static long getFramesCaptured() { return framesCaptured; }
+    public static String getVisionStatus() { return visionStatus; }
 
     private void captureFrame() {
         captureInFlight = true;
