@@ -25,12 +25,20 @@ public class AutoPlayAccessibilityService extends AccessibilityService {
 
     private final Runnable captureLoop = new Runnable() {
         @Override public void run() {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
-                && connected
-                && FloatingControlService.isAppEnabled(AutoPlayAccessibilityService.this)
-                && !FloatingControlService.isAppPaused(AutoPlayAccessibilityService.this)
-                && "com.kiloo.subwaysurf".equals(foregroundPackage)
-                && !captureInFlight) {
+            boolean enabled = FloatingControlService.isAppEnabled(AutoPlayAccessibilityService.this);
+            boolean paused = FloatingControlService.isAppPaused(AutoPlayAccessibilityService.this);
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                frameStatus = "Captura de tela exige Android 11 ou superior";
+            } else if (!connected) {
+                frameStatus = "Aguardando serviço de acessibilidade";
+            } else if (!enabled) {
+                frameStatus = "Toque em LIGAR no controle flutuante";
+            } else if (paused) {
+                frameStatus = "Captura pausada";
+            } else if (!"com.kiloo.subwaysurf".equals(foregroundPackage)) {
+                frameStatus = "Aguardando jogo | pacote: " +
+                    (foregroundPackage.isEmpty() ? "nenhum evento recebido" : foregroundPackage);
+            } else if (!captureInFlight) {
                 captureFrame();
             }
             if (handler != null) handler.postDelayed(this, 350);
@@ -67,6 +75,7 @@ public class AutoPlayAccessibilityService extends AccessibilityService {
     public static String getFrameStatus() { return frameStatus; }
     public static long getFramesCaptured() { return framesCaptured; }
     public static String getVisionStatus() { return visionStatus; }
+    public static String getForegroundPackage() { return foregroundPackage; }
 
     private void captureFrame() {
         captureInFlight = true;
@@ -83,6 +92,9 @@ public class AutoPlayAccessibilityService extends AccessibilityService {
                                 softwareBitmap = hardwareBitmap.copy(Bitmap.Config.ARGB_8888, false);
                                 if (softwareBitmap != null) {
                                     framesCaptured++;
+                                    SubwayVisionAnalyzer.Result analysis =
+                                        SubwayVisionAnalyzer.analyze(softwareBitmap);
+                                    visionStatus = analysis.summary;
                                     frameStatus = "Captura OK: " + softwareBitmap.getWidth()
                                         + "x" + softwareBitmap.getHeight()
                                         + " | quadros: " + framesCaptured;
