@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.IBinder;
@@ -114,13 +115,17 @@ public class FloatingControlService extends Service {
         bubble = new TextView(this);
         bubble.setText("SA");
         bubble.setTextColor(Color.WHITE);
-        bubble.setTextSize(15);
+        bubble.setTextSize(12);
         bubble.setTypeface(null, android.graphics.Typeface.BOLD);
         bubble.setGravity(Gravity.CENTER);
-        bubble.setBackgroundColor(0xEE1565C0);
-        bubble.setPadding(dp(15), dp(12), dp(15), dp(12));
-        bubble.setElevation(dp(8));
-        bubbleParams = makeParams(Gravity.TOP | Gravity.RIGHT, dp(18), dp(220));
+        GradientDrawable bubbleShape = new GradientDrawable();
+        bubbleShape.setShape(GradientDrawable.OVAL);
+        bubbleShape.setColor(0xEE1565C0);
+        bubble.setBackground(bubbleShape);
+        bubble.setElevation(dp(5));
+        bubbleParams = makeParams(Gravity.TOP | Gravity.LEFT, dp(8), dp(90));
+        bubbleParams.width = dp(42);
+        bubbleParams.height = dp(42);
 
         bubble.setOnClickListener(v -> toggleMenu());
         bubble.setOnTouchListener(new View.OnTouchListener() {
@@ -167,7 +172,7 @@ public class FloatingControlService extends Service {
     private void createMenu() {
         menu = new LinearLayout(this);
         menu.setOrientation(LinearLayout.VERTICAL);
-        menu.setPadding(dp(10), dp(10), dp(10), dp(10));
+        menu.setPadding(dp(6), dp(6), dp(6), dp(6));
         menu.setBackgroundColor(0xF21B2733);
         menu.setElevation(dp(10));
 
@@ -177,17 +182,17 @@ public class FloatingControlService extends Service {
         heading.setTextSize(14);
         heading.setGravity(Gravity.CENTER);
         heading.setPadding(0, 0, 0, dp(8));
-        menu.addView(heading, new LinearLayout.LayoutParams(dp(170), -2));
+        menu.addView(heading, new LinearLayout.LayoutParams(dp(148), -2));
 
         Button on = new Button(this);
         on.setText("LIGAR");
         on.setOnClickListener(v -> setAppEnabled(true));
-        menu.addView(on, new LinearLayout.LayoutParams(dp(170), -2));
+        menu.addView(on, new LinearLayout.LayoutParams(dp(148), -2));
 
         Button off = new Button(this);
         off.setText("DESLIGAR");
         off.setOnClickListener(v -> setAppEnabled(false));
-        menu.addView(off, new LinearLayout.LayoutParams(dp(170), -2));
+        menu.addView(off, new LinearLayout.LayoutParams(dp(148), -2));
 
         Button home = new Button(this);
         home.setText("MENU INICIAL");
@@ -197,11 +202,11 @@ public class FloatingControlService extends Service {
             startActivity(open);
             hideMenu();
         });
-        menu.addView(home, new LinearLayout.LayoutParams(dp(170), -2));
+        menu.addView(home, new LinearLayout.LayoutParams(dp(148), -2));
 
         pauseButton = new Button(this);
         pauseButton.setOnClickListener(v -> togglePaused());
-        menu.addView(pauseButton, new LinearLayout.LayoutParams(dp(170), -2));
+        menu.addView(pauseButton, new LinearLayout.LayoutParams(dp(148), -2));
 
         TextView state = new TextView(this);
         state.setTag("state");
@@ -209,16 +214,16 @@ public class FloatingControlService extends Service {
         state.setTextSize(12);
         state.setGravity(Gravity.CENTER);
         state.setPadding(0, dp(6), 0, 0);
-        menu.addView(state, new LinearLayout.LayoutParams(dp(170), -2));
+        menu.addView(state, new LinearLayout.LayoutParams(dp(148), -2));
         updateMenuState();
 
-        menuParams = makeParams(Gravity.TOP | Gravity.RIGHT, dp(18), dp(290));
+        menuParams = makeParams(Gravity.TOP | Gravity.LEFT, dp(8), dp(140));
     }
 
     private void positionMenu() {
         if (menu == null || !menuVisible) return;
         menuParams.x = bubbleParams.x;
-        menuParams.y = bubbleParams.y + dp(62);
+        menuParams.y = bubbleParams.y + dp(48);
         try { windowManager.updateViewLayout(menu, menuParams); } catch (Exception ignored) { }
     }
 
@@ -227,7 +232,7 @@ public class FloatingControlService extends Service {
         else {
             try {
                 menuParams.x = bubbleParams.x;
-                menuParams.y = bubbleParams.y + dp(62);
+                menuParams.y = bubbleParams.y + dp(48);
                 windowManager.addView(menu, menuParams);
                 menuVisible = true;
             } catch (Exception ignored) { }
